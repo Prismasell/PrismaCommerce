@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prisma Commerce v1 Technical Specification</title>
+  <style>
+    :root{--bg:#f8fafc;--panel:#fff;--text:#0f172a;--muted:#64748b;--brand:#4f46e5;--brand2:#7c3aed;--border:#e2e8f0;--code:#0f172a;--codeText:#e2e8f0;--green:#16a34a;--yellow:#ca8a04;--red:#dc2626}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);line-height:1.65}.layout{display:grid;grid-template-columns:300px 1fr;min-height:100vh}.sidebar{position:sticky;top:0;height:100vh;overflow:auto;background:#0b1020;color:#cbd5e1;padding:24px 18px;border-right:1px solid #1e293b}.brand{display:flex;align-items:center;gap:12px;margin-bottom:24px}.logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--brand),var(--brand2));display:flex;align-items:center;justify-content:center;color:white;font-weight:800}.brand h1{font-size:18px;line-height:1.2;margin:0;color:white}.brand p{font-size:12px;color:#94a3b8;margin:2px 0 0}.nav a{display:block;color:#cbd5e1;text-decoration:none;padding:8px 10px;border-radius:8px;font-size:14px}.nav a:hover{background:#111827;color:white}.nav .group{margin-top:14px;margin-bottom:6px;color:#818cf8;font-size:12px;text-transform:uppercase;letter-spacing:.08em;font-weight:700}.content{max-width:1180px;padding:42px 48px 80px}.hero{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;padding:42px;border-radius:24px;margin-bottom:34px;box-shadow:0 20px 50px rgba(79,70,229,.25)}.hero h1{font-size:42px;line-height:1.1;margin:0 0 12px}.hero p{font-size:18px;margin:0;color:#e0e7ff}.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}.pill{display:inline-flex;align-items:center;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:700;background:#eef2ff;color:#3730a3}.hero .pill{background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.25)}section{background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:30px;margin:22px 0;box-shadow:0 6px 20px rgba(15,23,42,.04)}h2{font-size:28px;margin:0 0 16px;border-bottom:1px solid var(--border);padding-bottom:12px}h3{font-size:21px;margin:26px 0 10px}h4{font-size:17px;margin:18px 0 8px}.lead{font-size:18px;color:#334155}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.card{border:1px solid var(--border);border-radius:16px;padding:18px;background:#fff}.card h4{margin-top:0}.muted{color:var(--muted)}code{background:#eef2ff;color:#3730a3;border-radius:6px;padding:2px 6px;font-size:.92em}pre{background:var(--code);color:var(--codeText);padding:18px;border-radius:16px;overflow:auto;border:1px solid #1e293b}pre code{background:transparent;color:inherit;padding:0}.table-wrap{overflow:auto;border:1px solid var(--border);border-radius:14px}table{width:100%;border-collapse:collapse;background:white}th,td{border-bottom:1px solid var(--border);padding:11px 12px;text-align:left;vertical-align:top;font-size:14px}th{background:#f1f5f9;color:#334155;font-weight:800}tr:last-child td{border-bottom:none}.tag{display:inline-flex;border-radius:999px;padding:2px 8px;font-size:12px;font-weight:800}.tag.get{background:#dcfce7;color:#166534}.tag.post{background:#dbeafe;color:#1d4ed8}.tag.put{background:#fef3c7;color:#92400e}.tag.patch{background:#ede9fe;color:#6d28d9}.tag.delete{background:#fee2e2;color:#991b1b}.note{border-left:4px solid var(--brand);background:#eef2ff;padding:14px 16px;border-radius:12px;margin:16px 0}.warning{border-left:4px solid var(--yellow);background:#fefce8;padding:14px 16px;border-radius:12px;margin:16px 0}.success{border-left:4px solid var(--green);background:#f0fdf4;padding:14px 16px;border-radius:12px;margin:16px 0}.checklist li{margin:8px 0}.small{font-size:13px}.footer{color:#64748b;margin-top:30px;text-align:center}@media(max-width:980px){.layout{grid-template-columns:1fr}.sidebar{position:relative;height:auto}.content{padding:24px}.hero h1{font-size:32px}.grid,.grid3{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand"><div class="logo">PC</div><div><h1>Prisma Commerce</h1><p>v1 Technical Specification</p></div></div>
+      <nav class="nav">
+        <div class="group">Start</div>
+        <a href="#overview">1. Overview</a><a href="#principles">2. Core Principles</a><a href="#stack">3. Technology Stack</a><a href="#structure">4. Project Structure</a><a href="#architecture">5. Architecture Layers</a><a href="#install">6. Easy Installation</a>
+        <div class="group">Core Platform</div>
+        <a href="#modules">7. Module Standards</a><a href="#admin">8. Admin Dashboard</a><a href="#roles">9. Roles & Permissions</a><a href="#settings">10. Settings</a><a href="#media">11. Media Manager</a>
+        <div class="group">Commerce</div>
+        <a href="#commerce">12. Commerce Modules</a><a href="#cms">13. CMS & Marketing</a><a href="#themes">14. Theme System</a><a href="#plugins">15. Plugin System</a><a href="#hooks">16. Hooks & Events</a>
+        <div class="group">API First</div>
+        <a href="#api-strategy">17. API Strategy</a><a href="#api-rules">18. API Standards</a><a href="#storefront-api">19. Storefront API</a><a href="#customer-api">20. Customer API</a><a href="#content-api">21. Content API</a><a href="#admin-api">22. Admin API</a><a href="#integration-api">23. Integration API</a><a href="#webhooks">24. Webhooks</a><a href="#mobile-nextjs">25. Mobile & Next.js</a><a href="#api-docs">26. API Documentation</a>
+        <div class="group">Delivery</div>
+        <a href="#testing">27. Testing</a><a href="#security">28. Security</a><a href="#roadmap">29. Roadmap</a><a href="#agent">30. AI Agent Build Rules</a>
+      </nav>
+    </aside>
+
+    <main class="content">
+      <header class="hero">
+        <h1>Prisma Commerce v1 Technical Specification</h1>
+        <p>A commerce-first Laravel platform with CMS, themes, plugins, headless APIs, mobile app support, and third-party integrations.</p>
+        <div class="meta"><span class="pill">Laravel + Filament</span><span class="pill">API First</span><span class="pill">Headless Ready</span><span class="pill">Plugin Friendly</span><span class="pill">Theme Friendly</span></div>
+      </header>
+
+      <section id="overview"><h2>1. Project Overview</h2><p class="lead"><strong>Prisma Commerce</strong> is a Laravel-based eCommerce platform designed to help businesses build online stores, manage products and orders, publish content, install themes, install plugins, and connect with mobile apps or third-party websites through APIs.</p><div class="note"><strong>Primary goal:</strong> build a Shopify + WooCommerce + Botble-inspired commerce platform, but with an independent architecture and API-first design.</div></section>
+
+      <section id="principles"><h2>2. Core Principles</h2><div class="grid3"><div class="card"><h4>Commerce First</h4><p>Products, customers, carts, checkout, orders, payments, shipping, coupons, and inventory are first-class modules.</p></div><div class="card"><h4>API First</h4><p>Everything useful to storefronts, mobile apps, Next.js websites, integrations, and AI agents must be available through versioned APIs.</p></div><div class="card"><h4>Developer Friendly</h4><p>Clear modules, documented APIs, stable hooks, plugin manifests, theme manifests, and automated tests.</p></div><div class="card"><h4>Theme Friendly</h4><p>Themes control storefront presentation without modifying core code or database structure.</p></div><div class="card"><h4>Plugin Friendly</h4><p>Plugins extend features through events, hooks, routes, migrations, settings, permissions, and admin menus.</p></div><div class="card"><h4>Community Ready</h4><p>The platform should support a future plugin/theme marketplace and migration guides for other ecosystems.</p></div></div></section>
+
+      <section id="stack"><h2>3. Technology Stack</h2><div class="table-wrap"><table><thead><tr><th>Area</th><th>Technology</th><th>Purpose</th></tr></thead><tbody><tr><td>Backend</td><td>Laravel 12, PHP 8.3+</td><td>Core application, modules, APIs, services, queues</td></tr><tr><td>Database</td><td>MySQL 8+ / PostgreSQL</td><td>Commerce, CMS, users, settings, logs</td></tr><tr><td>Admin</td><td>Filament, Livewire, Tailwind CSS, Alpine.js</td><td>Fast admin dashboard development</td></tr><tr><td>Frontend Themes</td><td>Blade, Vite, Tailwind CSS</td><td>Default storefront and community themes</td></tr><tr><td>API Auth</td><td>Laravel Sanctum, API Keys, OAuth2 later</td><td>Mobile apps, Next.js, external systems</td></tr><tr><td>Queue/Cache</td><td>Redis, Laravel Queue</td><td>Emails, webhooks, imports, background jobs</td></tr><tr><td>Testing</td><td>Pest/PHPUnit, Laravel Pint</td><td>Quality, security, style consistency</td></tr><tr><td>API Docs</td><td>Scribe or OpenAPI generator</td><td>Postman collection, OpenAPI spec, interactive docs</td></tr></tbody></table></div></section>
+
+      <section id="structure"><h2>4. Project Structure</h2><pre><code>prisma-commerce/
+├── app/
+├── modules/
+│   ├── Core/
+│   ├── Admin/
+│   ├── User/
+│   ├── Permission/
+│   ├── Setting/
+│   ├── Media/
+│   ├── Catalog/
+│   ├── Product/
+│   ├── Inventory/
+│   ├── Customer/
+│   ├── Cart/
+│   ├── Checkout/
+│   ├── Order/
+│   ├── Payment/
+│   ├── Shipping/
+│   ├── Coupon/
+│   ├── CMS/
+│   ├── Blog/
+│   ├── API/
+│   ├── Integration/
+│   ├── Theme/
+│   └── Plugin/
+├── plugins/
+├── themes/
+├── routes/
+├── database/
+└── storage/</code></pre></section>
+
+      <section id="architecture"><h2>5. Architecture Layers</h2><div class="grid"><div class="card"><h4>Core Layer</h4><p>Authentication, users, roles, permissions, settings, media, configuration, logs, notifications.</p></div><div class="card"><h4>Commerce Layer</h4><p>Products, categories, brands, carts, checkout, orders, customers, payments, shipping, coupons, inventory.</p></div><div class="card"><h4>CMS Layer</h4><p>Pages, blog, menus, SEO, sliders, ads, forms, reusable content blocks.</p></div><div class="card"><h4>Integration Layer</h4><p>Public API, customer API, admin API, integration API, webhooks, API keys, mobile/Next.js support.</p></div><div class="card"><h4>Extension Layer</h4><p>Themes, plugins, hooks, events, marketplace, plugin/theme installer.</p></div></div></section>
+
+      <section id="install"><h2>6. Easy Installation & Setup Experience</h2><p>Prisma Commerce must be easy for normal users to install on shared hosting, VPS, Cloudways, or managed Laravel hosting.</p><h3>Installation Goals</h3><ul class="checklist"><li>Web-based installer wizard.</li><li>Server requirement checker.</li><li>Database connection form.</li><li>Admin account creation.</li><li>Default store setup.</li><li>Demo data optional.</li><li>Automatic storage symlink check.</li><li>Clear error messages for missing PHP extensions or wrong permissions.</li></ul><h3>Installer Steps</h3><pre><code>1. Welcome
+2. Server Requirements Check
+3. Folder Permissions Check
+4. Database Setup
+5. Application Settings
+6. Admin User Creation
+7. Store Defaults
+8. Run Migrations & Seeders
+9. Finish Installation</code></pre><h3>Manual Install Commands</h3><pre><code>composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate --seed
+php artisan storage:link
+php artisan prisma:install
+php artisan serve</code></pre></section>
+
+      <section id="modules"><h2>7. Module Standards</h2><p>Every official module must be self-contained and follow a predictable structure.</p><pre><code>modules/Product/
+├── Config/
+├── Database/
+│   ├── Migrations/
+│   └── Seeders/
+├── Http/
+│   ├── Controllers/
+│   ├── Requests/
+│   └── Resources/
+├── Models/
+├── Services/
+├── Repositories/
+├── Filament/
+│   ├── Resources/
+│   └── Widgets/
+├── Routes/
+│   ├── web.php
+│   ├── admin.php
+│   └── api.php
+├── Providers/
+└── Tests/</code></pre><div class="warning"><strong>Rule:</strong> modules must never edit another module's internal files directly. Use events, contracts, services, or hooks.</div></section>
+
+      <section id="admin"><h2>8. Admin Dashboard</h2><p>Admin URL: <code>/admin</code></p><div class="grid3"><div class="card">Dashboard widgets</div><div class="card">Users</div><div class="card">Roles & Permissions</div><div class="card">Settings</div><div class="card">Media Manager</div><div class="card">Products</div><div class="card">Categories</div><div class="card">Brands</div><div class="card">Inventory</div><div class="card">Customers</div><div class="card">Orders</div><div class="card">Payments</div><div class="card">Shipping</div><div class="card">Coupons</div><div class="card">Pages</div><div class="card">Blog</div><div class="card">Menus</div><div class="card">SEO</div><div class="card">Themes</div><div class="card">Plugins</div><div class="card">API Keys</div><div class="card">Webhooks</div><div class="card">System Logs</div><div class="card">Installer/Updater</div></div></section>
+
+      <section id="roles"><h2>9. Roles & Permissions</h2><h3>Default Roles</h3><pre><code>Super Admin
+Administrator
+Store Manager
+Content Manager
+Support Agent
+Customer</code></pre><h3>Permission Examples</h3><pre><code>products.view
+products.create
+products.edit
+products.delete
+orders.view
+orders.update
+orders.cancel
+customers.view
+settings.manage
+media.upload
+plugins.install
+plugins.activate
+themes.install
+themes.activate
+api_keys.manage
+webhooks.manage</code></pre></section>
+
+      <section id="settings"><h2>10. Settings System</h2><p>All configurable values must be stored in the database and cached. No business setting should be hardcoded.</p><div class="grid3"><div class="card">Store name</div><div class="card">Logo</div><div class="card">Currency</div><div class="card">Timezone</div><div class="card">Tax settings</div><div class="card">SMTP/email</div><div class="card">SEO defaults</div><div class="card">Social links</div><div class="card">API/CORS settings</div></div></section>
+
+      <section id="media"><h2>11. Media Manager</h2><p>Media must be reusable by products, pages, blogs, themes, plugins, ads, and sliders.</p><div class="grid3"><div class="card">Upload files</div><div class="card">Folders</div><div class="card">Image optimization</div><div class="card">Alt text</div><div class="card">Bulk actions</div><div class="card">Search</div><div class="card">Local storage</div><div class="card">Amazon S3</div><div class="card">Cloudflare R2</div></div></section>
+
+      <section id="commerce"><h2>12. Commerce Modules</h2><div class="grid"><div class="card"><h4>Catalog</h4><p>Categories, brands, attributes, tags, filters.</p></div><div class="card"><h4>Products</h4><p>Simple, variable, digital, downloadable, related products, cross-sells, upsells.</p></div><div class="card"><h4>Inventory</h4><p>SKU, stock, low-stock alerts, inventory logs, warehouse-ready structure.</p></div><div class="card"><h4>Cart & Checkout</h4><p>Cart sessions, tax calculation, shipping methods, coupon application, checkout flow.</p></div><div class="card"><h4>Orders</h4><p>Statuses, order items, invoices, refunds, returns, payment proof, tracking.</p></div><div class="card"><h4>Customers</h4><p>Profiles, addresses, wishlist, reviews, notifications, device tokens.</p></div><div class="card"><h4>Payments</h4><p>Cash on delivery, bank transfer, Stripe, PayPal, payment plugin contracts.</p></div><div class="card"><h4>Shipping</h4><p>Zones, rates, methods, tracking, carrier plugins.</p></div></div></section>
+
+      <section id="cms"><h2>13. CMS & Marketing</h2><div class="grid3"><div class="card">Pages</div><div class="card">Blog posts</div><div class="card">Blog categories</div><div class="card">Tags</div><div class="card">Menus</div><div class="card">SEO metadata</div><div class="card">Sliders</div><div class="card">Ads/Banners</div><div class="card">Contact forms</div><div class="card">Flash sales</div><div class="card">Landing pages</div><div class="card">Schema fields</div></div></section>
+
+      <section id="themes"><h2>14. Theme System</h2><p>Themes control storefront presentation and must be safe for community developers.</p><pre><code>themes/default/
+├── theme.json
+├── screenshot.png
+├── assets/
+├── views/
+├── layouts/
+├── sections/
+├── components/
+└── settings/</code></pre><pre><code>{
+  "name": "Default",
+  "version": "1.0.0",
+  "author": "Prisma Commerce",
+  "description": "Default storefront theme",
+  "supports": ["products", "cart", "checkout", "blog", "pages"]
+}</code></pre><div class="warning">Themes cannot modify database schema, core files, permissions, or payment logic.</div></section>
+
+      <section id="plugins"><h2>15. Plugin System</h2><p>Plugins extend Prisma Commerce without modifying the core.</p><pre><code>plugins/StripePayment/
+├── plugin.json
+├── src/
+├── routes/
+├── migrations/
+├── resources/
+├── config/
+├── database/
+└── Providers/PluginServiceProvider.php</code></pre><pre><code>{
+  "name": "Stripe Payment",
+  "slug": "stripe-payment",
+  "version": "1.0.0",
+  "author": "Prisma Commerce",
+  "type": "payment",
+  "requires": {
+    "prisma-commerce": ">=1.0.0"
+  }
+}</code></pre></section>
+
+      <section id="hooks"><h2>16. Hooks & Events</h2><p>Plugins and modules communicate through hooks and events.</p><pre><code>order.created
+order.paid
+order.cancelled
+order.refunded
+order.return_requested
+customer.registered
+customer.logged_in
+product.created
+product.updated
+product.stock_low
+cart.updated
+checkout.started
+payment.succeeded
+payment.failed
+theme.loaded
+plugin.installed
+plugin.activated
+plugin.deactivated</code></pre></section>
+
+      <section id="api-strategy"><h2>17. API-First Strategy</h2><p class="lead">Prisma Commerce must support traditional themes and fully headless usage. A business should be able to use Prisma Commerce as the backend for a Blade theme, Next.js storefront, Nuxt storefront, Flutter app, React Native app, or external marketplace integration.</p><div class="success"><strong>Requirement:</strong> every customer-facing storefront feature must be available through API v1.</div><h3>API Groups</h3><pre><code>/api/v1/store/*        Public storefront/headless API
+/api/v1/customer/*     Authenticated customer account API
+/api/v1/content/*      CMS/blog/pages/menu/SEO API
+/api/v1/admin/*        Admin/system API for dashboards and internal tools
+/api/v1/integration/*  Third-party integration API
+/api/v1/webhooks/*     Webhook management and delivery logs</code></pre></section>
+
+      <section id="api-rules"><h2>18. API Standards</h2><div class="grid"><div class="card"><h4>Versioning</h4><p>All endpoints start with <code>/api/v1</code>. Never break v1 responses after public release.</p></div><div class="card"><h4>Authentication</h4><p>Public endpoints are open. Customer endpoints use Sanctum. Admin/integration endpoints use permissions and API keys.</p></div><div class="card"><h4>Response Format</h4><p>Use consistent JSON: <code>success</code>, <code>data</code>, <code>message</code>, <code>errors</code>, <code>meta</code>.</p></div><div class="card"><h4>Pagination</h4><p>List endpoints support <code>page</code>, <code>per_page</code>, <code>sort</code>, <code>filter</code>, and <code>include</code>.</p></div><div class="card"><h4>Rate Limiting</h4><p>Apply different limits for public, customer, admin, and integration APIs.</p></div><div class="card"><h4>CORS</h4><p>Configurable allowed origins for Next.js, mobile apps, and third-party frontends.</p></div></div><h3>Standard Response</h3><pre><code>{
+  "success": true,
+  "data": {},
+  "message": null,
+  "errors": null,
+  "meta": {
+    "version": "v1"
+  }
+}</code></pre></section>
+
+      <section id="storefront-api"><h2>19. Storefront API Endpoints</h2><p>These endpoints allow public websites, Next.js frontends, mobile apps, and external storefronts to read products and complete shopping flows.</p><div class="table-wrap"><table><thead><tr><th>Method</th><th>Endpoint</th><th>Purpose</th></tr></thead><tbody>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/store</code></td><td>Get store configuration, active theme metadata, currency, language, logo, SEO defaults.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/store/products</code></td><td>List products with filters, sorting, pagination.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/store/products/{slug}</code></td><td>Get product details by slug.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/store/products/{id}/related</code></td><td>Get related products.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/store/products/{id}/cross-sells</code></td><td>Get cross-sell products.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/store/products/{id}/reviews</code></td><td>Get product reviews.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/store/products/variation</code></td><td>Get matching product variation by selected attributes.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/store/categories</code></td><td>List product categories.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/store/categories/{slug}</code></td><td>Get category details.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/store/categories/{slug}/products</code></td><td>Get products by category.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/store/brands</code></td><td>List brands.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/store/brands/{slug}</code></td><td>Get brand details.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/store/brands/{slug}/products</code></td><td>Get products by brand.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/store/filters</code></td><td>Get available filter data for products.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/store/currencies</code></td><td>Get available currencies.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/store/currency</code></td><td>Get current currency.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/store/languages</code></td><td>Get available languages.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/store/language</code></td><td>Get current language.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/store/countries</code></td><td>Get available countries.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/store/flash-sales</code></td><td>Get active flash sales.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/store/sliders</code></td><td>Get storefront sliders.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/store/ads</code></td><td>Get ads/banners by keys.</td></tr>
+</tbody></table></div>
+<h3>Cart API</h3><div class="table-wrap"><table><thead><tr><th>Method</th><th>Endpoint</th><th>Purpose</th></tr></thead><tbody>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/store/cart</code></td><td>Create or restore cart.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/store/cart/{cart_id}</code></td><td>Get cart by ID.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/store/cart/{cart_id}/items</code></td><td>Add product to cart.</td></tr>
+<tr><td><span class="tag put">PUT</span></td><td><code>/api/v1/store/cart/{cart_id}/items/{item_id}</code></td><td>Update cart item quantity.</td></tr>
+<tr><td><span class="tag delete">DELETE</span></td><td><code>/api/v1/store/cart/{cart_id}/items/{item_id}</code></td><td>Remove cart item.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/store/cart/{cart_id}/refresh</code></td><td>Refresh cart totals and items.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/store/cart/{cart_id}/tax</code></td><td>Calculate cart tax.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/store/cart/{cart_id}/coupon</code></td><td>Apply coupon code.</td></tr>
+<tr><td><span class="tag delete">DELETE</span></td><td><code>/api/v1/store/cart/{cart_id}/coupon</code></td><td>Remove coupon code.</td></tr>
+</tbody></table></div>
+<h3>Checkout API</h3><div class="table-wrap"><table><thead><tr><th>Method</th><th>Endpoint</th><th>Purpose</th></tr></thead><tbody>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/store/checkout/{cart_id}/shipping-methods</code></td><td>Calculate available shipping methods.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/store/checkout/{cart_id}/payment-methods</code></td><td>Get available payment methods.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/store/checkout/{cart_id}</code></td><td>Process checkout and create order.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/store/checkout/order/{token}</code></td><td>Get order confirmation by token.</td></tr>
+</tbody></table></div>
+<h3>Wishlist & Compare API</h3><div class="table-wrap"><table><thead><tr><th>Method</th><th>Endpoint</th><th>Purpose</th></tr></thead><tbody>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/store/wishlist</code></td><td>Get wishlist items.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/store/wishlist</code></td><td>Add product to wishlist.</td></tr>
+<tr><td><span class="tag delete">DELETE</span></td><td><code>/api/v1/store/wishlist/{product_id}</code></td><td>Remove product from wishlist.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/store/compare</code></td><td>Get compare items.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/store/compare</code></td><td>Add product to compare.</td></tr>
+<tr><td><span class="tag delete">DELETE</span></td><td><code>/api/v1/store/compare/{product_id}</code></td><td>Remove product from compare.</td></tr>
+</tbody></table></div>
+</section>
+
+      <section id="customer-api"><h2>20. Customer Account API</h2><p>Customer APIs require authentication unless noted.</p><div class="table-wrap"><table><thead><tr><th>Method</th><th>Endpoint</th><th>Purpose</th></tr></thead><tbody>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/auth/register</code></td><td>Register customer.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/auth/login</code></td><td>Login and return token.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/auth/logout</code></td><td>Logout current token.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/auth/check-email</code></td><td>Check if email exists.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/auth/forgot-password</code></td><td>Send password reset link.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/auth/resend-verification</code></td><td>Resend email verification.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/auth/google</code></td><td>Login/register with Google.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/auth/facebook</code></td><td>Login/register with Facebook.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/auth/apple</code></td><td>Login/register with Apple.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/customer/profile</code></td><td>Get profile.</td></tr>
+<tr><td><span class="tag put">PUT</span></td><td><code>/api/v1/customer/profile</code></td><td>Update profile.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/customer/avatar</code></td><td>Update avatar.</td></tr>
+<tr><td><span class="tag put">PUT</span></td><td><code>/api/v1/customer/password</code></td><td>Update password.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/customer/addresses</code></td><td>List customer addresses.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/customer/addresses</code></td><td>Create address.</td></tr>
+<tr><td><span class="tag put">PUT</span></td><td><code>/api/v1/customer/addresses/{id}</code></td><td>Update address.</td></tr>
+<tr><td><span class="tag delete">DELETE</span></td><td><code>/api/v1/customer/addresses/{id}</code></td><td>Delete address.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/customer/orders</code></td><td>List customer orders.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/customer/orders/{id}</code></td><td>Get order detail.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/customer/orders/{id}/cancel</code></td><td>Cancel order.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/customer/orders/{id}/invoice</code></td><td>Print/download invoice.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/customer/orders/{id}/payment-proof</code></td><td>Upload payment proof.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/customer/orders/{id}/track</code></td><td>Track order.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/customer/orders/{id}/confirm-delivery</code></td><td>Confirm delivery.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/customer/returns</code></td><td>List return requests.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/customer/returns</code></td><td>Submit return request.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/customer/downloads</code></td><td>List digital product downloads.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/customer/downloads/{token}</code></td><td>Download digital product by token.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/customer/reviews</code></td><td>List customer reviews.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/customer/reviews</code></td><td>Create review.</td></tr>
+<tr><td><span class="tag delete">DELETE</span></td><td><code>/api/v1/customer/reviews/{id}</code></td><td>Delete review.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/customer/device-tokens</code></td><td>Register/update mobile device token.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/customer/notifications</code></td><td>List notifications.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/customer/notifications/read-all</code></td><td>Mark all notifications as read.</td></tr>
+</tbody></table></div></section>
+
+      <section id="content-api"><h2>21. Content, CMS & Marketing API</h2><p>These endpoints let Next.js, mobile apps, and external websites read CMS content from Prisma Commerce.</p><div class="table-wrap"><table><thead><tr><th>Method</th><th>Endpoint</th><th>Purpose</th></tr></thead><tbody>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/content/pages</code></td><td>List pages.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/content/pages/{slug}</code></td><td>Get page by slug.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/content/blog/posts</code></td><td>List blog posts.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/content/blog/posts/search</code></td><td>Search blog posts.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/content/blog/posts/{slug}</code></td><td>Get post by slug.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/content/blog/categories</code></td><td>List blog categories.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/content/blog/categories/{slug}</code></td><td>Get blog category by slug.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/content/blog/tags</code></td><td>List blog tags.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/content/menus/{location}</code></td><td>Get menu by location, such as header or footer.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/content/seo/{type}/{id}</code></td><td>Get SEO metadata.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/content/forms/{slug}</code></td><td>Get form schema.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/content/forms/{slug}/submit</code></td><td>Submit form.</td></tr>
+</tbody></table></div></section>
+
+      <section id="admin-api"><h2>22. Admin API</h2><p>Admin APIs are for internal dashboards, approved external admin panels, automation tools, and AI agents. They require admin authentication and granular permissions.</p><div class="table-wrap"><table><thead><tr><th>Method</th><th>Endpoint</th><th>Purpose</th></tr></thead><tbody>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/admin/dashboard</code></td><td>Dashboard stats and widgets.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/admin/products</code></td><td>List products.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/admin/products</code></td><td>Create product.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/admin/products/{id}</code></td><td>Get product.</td></tr>
+<tr><td><span class="tag put">PUT</span></td><td><code>/api/v1/admin/products/{id}</code></td><td>Update product.</td></tr>
+<tr><td><span class="tag delete">DELETE</span></td><td><code>/api/v1/admin/products/{id}</code></td><td>Delete product.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/admin/orders</code></td><td>List orders.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/admin/orders/{id}</code></td><td>Get order.</td></tr>
+<tr><td><span class="tag put">PUT</span></td><td><code>/api/v1/admin/orders/{id}/status</code></td><td>Update order status.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/admin/orders/{id}/refund</code></td><td>Create refund.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/admin/customers</code></td><td>List customers.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/admin/customers/{id}</code></td><td>Get customer.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/admin/media</code></td><td>List media files.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/admin/media</code></td><td>Upload media file.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/admin/settings</code></td><td>List settings.</td></tr>
+<tr><td><span class="tag put">PUT</span></td><td><code>/api/v1/admin/settings</code></td><td>Update settings.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/admin/themes</code></td><td>List installed themes.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/admin/themes/install</code></td><td>Install theme package.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/admin/themes/{slug}/activate</code></td><td>Activate theme.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/admin/plugins</code></td><td>List plugins.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/admin/plugins/install</code></td><td>Install plugin package.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/admin/plugins/{slug}/activate</code></td><td>Activate plugin.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/admin/plugins/{slug}/deactivate</code></td><td>Deactivate plugin.</td></tr>
+</tbody></table></div></section>
+
+      <section id="integration-api"><h2>23. Integration API</h2><p>Integration APIs are for ERP, CRM, marketplace, automation, inventory sync, shipping, accounting, and external business systems.</p><div class="table-wrap"><table><thead><tr><th>Method</th><th>Endpoint</th><th>Purpose</th></tr></thead><tbody>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/integration/products</code></td><td>Sync products outward.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/integration/products/bulk</code></td><td>Bulk create/update products.</td></tr>
+<tr><td><span class="tag put">PUT</span></td><td><code>/api/v1/integration/inventory/{sku}</code></td><td>Update stock by SKU.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/integration/orders</code></td><td>Pull orders for ERP/fulfillment.</td></tr>
+<tr><td><span class="tag put">PUT</span></td><td><code>/api/v1/integration/orders/{id}/tracking</code></td><td>Update tracking number.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/integration/customers/bulk</code></td><td>Bulk import/update customers.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/integration/reports/sales</code></td><td>Sales reporting endpoint.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/integration/reports/inventory</code></td><td>Inventory reporting endpoint.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/integration/api-keys</code></td><td>List API keys, admin only.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/integration/api-keys</code></td><td>Create API key, admin only.</td></tr>
+</tbody></table></div><h3>Future Integration Plugins</h3><pre><code>HubSpot
+Salesforce
+Zoho
+WhatsApp
+Meta Pixel / Meta Catalog
+Google Merchant Center
+TikTok Shop
+Daraz
+Amazon
+eBay
+QuickBooks
+Xero
+ShipStation
+DHL / FedEx / UPS</code></pre></section>
+
+      <section id="webhooks"><h2>24. Webhooks</h2><p>External systems must be able to subscribe to Prisma Commerce events.</p><div class="table-wrap"><table><thead><tr><th>Method</th><th>Endpoint</th><th>Purpose</th></tr></thead><tbody>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/webhooks</code></td><td>List webhook subscriptions.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/webhooks</code></td><td>Create webhook subscription.</td></tr>
+<tr><td><span class="tag put">PUT</span></td><td><code>/api/v1/webhooks/{id}</code></td><td>Update webhook subscription.</td></tr>
+<tr><td><span class="tag delete">DELETE</span></td><td><code>/api/v1/webhooks/{id}</code></td><td>Delete webhook subscription.</td></tr>
+<tr><td><span class="tag get">GET</span></td><td><code>/api/v1/webhooks/{id}/deliveries</code></td><td>View delivery logs.</td></tr>
+<tr><td><span class="tag post">POST</span></td><td><code>/api/v1/webhooks/{id}/test</code></td><td>Send test webhook.</td></tr>
+</tbody></table></div><h3>Core Webhook Events</h3><pre><code>order.created
+order.updated
+order.paid
+order.cancelled
+order.refunded
+order.return_requested
+order.fulfilled
+customer.created
+customer.updated
+product.created
+product.updated
+product.deleted
+product.stock_low
+cart.abandoned
+payment.succeeded
+payment.failed
+shipment.created
+coupon.used
+review.created
+plugin.activated
+theme.activated</code></pre><h3>Webhook Payload Example</h3><pre><code>{
+  "id": "evt_01HXYZ",
+  "event": "order.created",
+  "created_at": "2026-06-11T10:00:00Z",
+  "data": {
+    "order_id": 123,
+    "order_number": "PC-10001",
+    "total": 149.99,
+    "currency": "USD"
+  },
+  "signature": "sha256=..."
+}</code></pre></section>
+
+      <section id="mobile-nextjs"><h2>25. Mobile App & Next.js Headless Support</h2><h3>Next.js Storefront Requirements</h3><ul class="checklist"><li>All product, category, brand, page, blog, menu, SEO, cart, checkout, and order confirmation data must be available through APIs.</li><li>CORS must allow configured storefront domains.</li><li>SEO metadata must be available by route or entity.</li><li>Product filters must be API-readable.</li><li>Cart must work without Laravel sessions, using cart IDs or tokens.</li><li>Checkout must work through JSON APIs.</li></ul><h3>Mobile App Requirements</h3><ul class="checklist"><li>Token-based customer authentication.</li><li>Device token registration for push notifications.</li><li>Customer profile, addresses, wishlist, orders, returns, downloads, reviews.</li><li>API-friendly image URLs and thumbnails.</li><li>Consistent error responses.</li><li>Pagination for all list endpoints.</li></ul><h3>Headless Modes</h3><pre><code>Mode 1: Prisma Commerce + Blade Theme
+Mode 2: Prisma Commerce + Next.js Storefront
+Mode 3: Prisma Commerce + Flutter / React Native App
+Mode 4: Prisma Commerce + External Marketplace / ERP
+Mode 5: Prisma Commerce as API-only backend</code></pre></section>
+
+      <section id="api-docs"><h2>26. API Documentation Requirements</h2><p>Prisma Commerce must automatically generate developer-friendly API documentation.</p><div class="grid"><div class="card"><h4>Interactive API Docs</h4><p>Generate browser-based API docs with endpoint descriptions, parameters, examples, and responses.</p></div><div class="card"><h4>Postman Collection</h4><p>Export a Postman collection for developers and mobile app teams.</p></div><div class="card"><h4>OpenAPI Spec</h4><p>Export <code>openapi.yaml</code> or <code>openapi.json</code> for SDK generation.</p></div><div class="card"><h4>Code Examples</h4><p>Include cURL and JavaScript examples at minimum. Add PHP/Node examples later.</p></div></div><h3>Suggested Tool</h3><pre><code>knuckleswtf/scribe</code></pre><h3>Documentation URLs</h3><pre><code>/docs/api
+/docs/api/postman
+/docs/api/openapi.json</code></pre><div class="note">The reference documentation reviewed includes endpoint categories such as auth, addresses, blog, brands, cart, checkout, compare, coupons, currencies, device tokens, downloads, orders, pages, products, profile, reviews, wishlist, plus Postman and OpenAPI exports. Prisma Commerce should cover these categories and extend them with admin, integration, and webhook APIs.</div></section>
+
+      <section id="testing"><h2>27. Testing Requirements</h2><ul class="checklist"><li>Every module must include unit and feature tests.</li><li>Every API endpoint must include success, validation, permission, and unauthenticated tests.</li><li>Every permission must be tested.</li><li>Plugin installation, activation, deactivation, and removal must be tested.</li><li>Theme activation must be tested.</li><li>Minimum target coverage: 80%.</li></ul></section>
+
+      <section id="security"><h2>28. Security Requirements</h2><ul class="checklist"><li>Never expose admin APIs without authentication and permissions.</li><li>Use signed webhooks with retry and delivery logs.</li><li>Use rate limiting for public endpoints.</li><li>Use CORS allowlist, not unrestricted production CORS.</li><li>Validate uploaded theme and plugin packages.</li><li>Do not allow themes to execute migrations.</li><li>Do not store plaintext API keys after display; store hashed keys.</li><li>Audit log admin actions and plugin/theme installation.</li></ul></section>
+
+      <section id="roadmap"><h2>29. Roadmap</h2><div class="grid"><div class="card"><h4>V1: Foundation + Headless Core</h4><p>Core admin, users, permissions, settings, media, products, categories, customers, cart, checkout, orders, core storefront/customer/content APIs.</p></div><div class="card"><h4>V2: Commerce Expansion</h4><p>Payments, shipping, coupons, returns, reviews, downloads, notifications, webhooks, API docs, Postman, OpenAPI.</p></div><div class="card"><h4>V3: Ecosystem</h4><p>Plugin marketplace, theme marketplace, Botble migration guide, Botble migration assistant, page builder.</p></div><div class="card"><h4>V4: Enterprise</h4><p>Multi-store, multi-vendor, advanced analytics, ERP integrations, advanced automation, AI agent APIs.</p></div></div></section>
+
+      <section id="agent"><h2>30. AI Agent Build Rules</h2><p>If an AI coding agent is used, it must follow this document as the source of truth.</p><ul class="checklist"><li>Use staging server only.</li><li>Use feature branches, not direct commits to main.</li><li>Build milestones in order.</li><li>Write tests for every module and API endpoint.</li><li>Document every new API route.</li><li>Do not add packages without explaining why.</li><li>Do not edit vendor files.</li><li>Do not hardcode settings or permissions.</li><li>Do not introduce breaking API response changes.</li></ul><h3>First AI Agent Milestone</h3><pre><code>Milestone 1: Core Admin Foundation
+- Install Laravel
+- Install Filament
+- Create modules folder
+- Create User module
+- Create Permission module
+- Create Setting module
+- Create Media module skeleton
+- Create API module skeleton
+- Create Theme module skeleton
+- Create Plugin module skeleton
+- Add README documentation
+- Run migrations
+- Run tests</code></pre></section>
+
+      <p class="footer small">Prisma Commerce v1 Technical Specification — API-first documentation version.</p>
+    </main>
+  </div>
+</body>
+</html>
