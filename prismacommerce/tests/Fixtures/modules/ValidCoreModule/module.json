@@ -1,0 +1,21 @@
+{
+  "name": "Valid Core Fixture",
+  "slug": "valid-core-fixture",
+  "version": "1.0.0",
+  "layer": "core",
+  "enabled": true,
+  "description": "A test-only module manifest used to validate registry discovery.",
+  "providers": [
+    "Tests\\Fixtures\\Modules\\ValidCoreModule\\Providers\\ValidCoreModuleServiceProvider"
+  ],
+  "dependencies": [],
+  "permissions": [
+    "valid-core-fixture.view"
+  ],
+  "routes": {
+    "api": "Routes/api.php",
+    "admin": "Routes/admin.php",
+    "web": "Routes/web.php"
+  },
+  "migrations_path": "Database/Migrations"
+}

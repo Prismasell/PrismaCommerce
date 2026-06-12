@@ -1,0 +1,7 @@
+{
+  "name": "Disabled Fixture",
+  "slug": "disabled-fixture",
+  "version": "1.0.0",
+  "layer": "core",
+  "enabled": false
+}

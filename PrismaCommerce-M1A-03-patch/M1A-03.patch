@@ -1,0 +1,862 @@
+diff -ruN /workspace/deliverables/PrismaCommerce-M1A-02/.env.example /workspace/work/PrismaCommerce-M1A-03/.env.example
+--- /workspace/deliverables/PrismaCommerce-M1A-02/.env.example	2026-06-11 10:31:29.000000000 -0300
++++ /workspace/work/PrismaCommerce-M1A-03/.env.example	2026-06-12 00:52:55.316913882 -0300
+@@ -42,4 +42,9 @@
+ SANCTUM_STATEFUL_DOMAINS=localhost,localhost:3000,127.0.0.1,127.0.0.1:8000
+ CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+ 
++PRISMA_MODULES_PATH=
++PRISMA_MODULE_CACHE_ENABLED=true
++PRISMA_MODULE_CACHE_KEY=prisma.modules.registry
++PRISMA_MODULE_CACHE_TTL=300
++
+ VITE_APP_NAME="${APP_NAME}"
+diff -ruN /workspace/deliverables/PrismaCommerce-M1A-02/README.md /workspace/work/PrismaCommerce-M1A-03/README.md
+--- /workspace/deliverables/PrismaCommerce-M1A-02/README.md	2026-06-11 10:30:46.000000000 -0300
++++ /workspace/work/PrismaCommerce-M1A-03/README.md	2026-06-12 00:53:40.713563171 -0300
+@@ -2,7 +2,7 @@
+ 
+ Prisma Commerce is an API-first Laravel commerce platform foundation.
+ 
+-This package delivers **M1A-02: Laravel + Filament Baseline** only. It establishes the framework, admin panel registration, versioned foundation APIs, baseline database migrations, test scaffolding, and project documentation required before module skeleton work begins.
++This package includes **M1A-02: Laravel + Filament Baseline** and the additive **M1A-03: Core Modular Directory and Prisma Module Registry Foundation** changes.
+ 
+ ## M1A-02 Scope
+ 
+@@ -26,9 +26,19 @@
+   - `plugins/`
+   - `themes/`
+ 
++## M1A-03 Scope
++
++- Prisma-owned module registry contract.
++- Filesystem discovery of `module.json` manifests from `modules/`.
++- Typed module manifest validation.
++- Registry service provider binding.
++- Module registry configuration.
++- Module architecture documentation.
++- Unit tests using fixture manifests.
++
+ ## Out of Scope
+ 
+-M1A-03 has not been started. This deliverable does not implement official module manifests, module service providers, module route discovery, or module skeleton internals.
++M1A-04 has not been started. This deliverable does not implement commerce features, official module skeleton internals, admin module management UI, database-backed module state, route auto-loading, migration auto-loading, or permission seeding.
+ 
+ ## Quick Install
+ 
+diff -ruN /workspace/deliverables/PrismaCommerce-M1A-02/app/Prisma/Modules/Contracts/ModuleRegistryContract.php /workspace/work/PrismaCommerce-M1A-03/app/Prisma/Modules/Contracts/ModuleRegistryContract.php
+--- /workspace/deliverables/PrismaCommerce-M1A-02/app/Prisma/Modules/Contracts/ModuleRegistryContract.php	1969-12-31 21:00:00.000000000 -0300
++++ /workspace/work/PrismaCommerce-M1A-03/app/Prisma/Modules/Contracts/ModuleRegistryContract.php	2026-06-12 00:52:55.312913825 -0300
+@@ -0,0 +1,20 @@
++<?php
++
++namespace App\Prisma\Modules\Contracts;
++
++use App\Prisma\Modules\Data\ModuleManifest;
++use Illuminate\Support\Collection;
++
++interface ModuleRegistryContract
++{
++    /**
++     * @return Collection<int, ModuleManifest>
++     */
++    public function all(): Collection;
++
++    public function find(string $slug): ?ModuleManifest;
++
++    public function has(string $slug): bool;
++
++    public function refresh(): void;
++}
+diff -ruN /workspace/deliverables/PrismaCommerce-M1A-02/app/Prisma/Modules/Data/ModuleManifest.php /workspace/work/PrismaCommerce-M1A-03/app/Prisma/Modules/Data/ModuleManifest.php
+--- /workspace/deliverables/PrismaCommerce-M1A-02/app/Prisma/Modules/Data/ModuleManifest.php	1969-12-31 21:00:00.000000000 -0300
++++ /workspace/work/PrismaCommerce-M1A-03/app/Prisma/Modules/Data/ModuleManifest.php	2026-06-12 00:52:55.312913825 -0300
+@@ -0,0 +1,107 @@
++<?php
++
++namespace App\Prisma\Modules\Data;
++
++use App\Prisma\Modules\Exceptions\InvalidModuleManifestException;
++
++final readonly class ModuleManifest
++{
++    /**
++     * @param  array<int, string>  $providers
++     * @param  array<int, string>  $dependencies
++     * @param  array<int, string>  $permissions
++     * @param  array<string, string>  $routes
++     * @param  array<string, mixed>  $extra
++     */
++    public function __construct(
++        public string $name,
++        public string $slug,
++        public string $version,
++        public string $layer,
++        public bool $enabled,
++        public string $path,
++        public ?string $description = null,
++        public array $providers = [],
++        public array $dependencies = [],
++        public array $permissions = [],
++        public array $routes = [],
++        public ?string $migrationsPath = null,
++        public array $extra = [],
++    ) {
++    }
++
++    /**
++     * @param  array<string, mixed>  $data
++     * @param  array<int, string>  $allowedLayers
++     */
++    public static function fromArray(array $data, string $modulePath, array $allowedLayers): self
++    {
++        foreach (['name', 'slug', 'version', 'layer'] as $field) {
++            if (! isset($data[$field]) || ! is_string($data[$field]) || trim($data[$field]) === '') {
++                throw InvalidModuleManifestException::missingField($modulePath, $field);
++            }
++        }
++
++        if (! preg_match('/^[a-z0-9][a-z0-9-]*$/', $data['slug'])) {
++            throw InvalidModuleManifestException::invalidSlug($modulePath, $data['slug']);
++        }
++
++        if (! in_array($data['layer'], $allowedLayers, true)) {
++            throw InvalidModuleManifestException::invalidLayer($modulePath, $data['layer'], $allowedLayers);
++        }
++
++        return new self(
++            name: $data['name'],
++            slug: $data['slug'],
++            version: $data['version'],
++            layer: $data['layer'],
++            enabled: (bool) ($data['enabled'] ?? true),
++            path: $modulePath,
++            description: isset($data['description']) && is_string($data['description']) ? $data['description'] : null,
++            providers: self::stringList($data['providers'] ?? []),
++            dependencies: self::stringList($data['dependencies'] ?? []),
++            permissions: self::stringList($data['permissions'] ?? []),
++            routes: self::stringMap($data['routes'] ?? []),
++            migrationsPath: isset($data['migrations_path']) && is_string($data['migrations_path']) ? $data['migrations_path'] : null,
++            extra: array_diff_key($data, array_flip([
++                'name',
++                'slug',
++                'version',
++                'layer',
++                'enabled',
++                'description',
++                'providers',
++                'dependencies',
++                'permissions',
++                'routes',
++                'migrations_path',
++            ])),
++        );
++    }
++
++    /**
++     * @param  mixed  $value
++     * @return array<int, string>
++     */
++    private static function stringList(mixed $value): array
++    {
++        if (! is_array($value)) {
++            return [];
++        }
++
++        return array_values(array_filter($value, is_string(...)));
++    }
++
++    /**
++     * @param  mixed  $value
++     * @return array<string, string>
++     */
++    private static function stringMap(mixed $value): array
++    {
++        if (! is_array($value)) {
++            return [];
++        }
++
++        return array_filter($value, is_string(...));
++    }
++}
+diff -ruN /workspace/deliverables/PrismaCommerce-M1A-02/app/Prisma/Modules/Exceptions/InvalidModuleManifestException.php /workspace/work/PrismaCommerce-M1A-03/app/Prisma/Modules/Exceptions/InvalidModuleManifestException.php
+--- /workspace/deliverables/PrismaCommerce-M1A-02/app/Prisma/Modules/Exceptions/InvalidModuleManifestException.php	1969-12-31 21:00:00.000000000 -0300
++++ /workspace/work/PrismaCommerce-M1A-03/app/Prisma/Modules/Exceptions/InvalidModuleManifestException.php	2026-06-12 00:52:55.316913882 -0300
+@@ -0,0 +1,33 @@
++<?php
++
++namespace App\Prisma\Modules\Exceptions;
++
++use InvalidArgumentException;
++
++class InvalidModuleManifestException extends InvalidArgumentException
++{
++    public static function missingField(string $modulePath, string $field): self
++    {
++        return new self("Module manifest at [{$modulePath}] is missing required field [{$field}].");
++    }
++
++    public static function invalidJson(string $manifestPath): self
++    {
++        return new self("Module manifest [{$manifestPath}] contains invalid JSON.");
++    }
++
++    public static function invalidSlug(string $modulePath, string $slug): self
++    {
++        return new self("Module manifest at [{$modulePath}] has invalid slug [{$slug}]. Use lowercase letters, numbers, and hyphens only.");
++    }
++
++    /**
++     * @param  array<int, string>  $allowedLayers
++     */
++    public static function invalidLayer(string $modulePath, string $layer, array $allowedLayers): self
++    {
++        $allowed = implode(', ', $allowedLayers);
++
++        return new self("Module manifest at [{$modulePath}] has invalid layer [{$layer}]. Allowed layers: {$allowed}.");
++    }
++}
+diff -ruN /workspace/deliverables/PrismaCommerce-M1A-02/app/Prisma/Modules/ModuleManifestLoader.php /workspace/work/PrismaCommerce-M1A-03/app/Prisma/Modules/ModuleManifestLoader.php
+--- /workspace/deliverables/PrismaCommerce-M1A-02/app/Prisma/Modules/ModuleManifestLoader.php	1969-12-31 21:00:00.000000000 -0300
++++ /workspace/work/PrismaCommerce-M1A-03/app/Prisma/Modules/ModuleManifestLoader.php	2026-06-12 00:52:55.316913882 -0300
+@@ -0,0 +1,30 @@
++<?php
++
++namespace App\Prisma\Modules;
++
++use App\Prisma\Modules\Data\ModuleManifest;
++use App\Prisma\Modules\Exceptions\InvalidModuleManifestException;
++use Illuminate\Filesystem\Filesystem;
++
++class ModuleManifestLoader
++{
++    public function __construct(
++        private readonly Filesystem $files,
++    ) {
++    }
++
++    /**
++     * @param  array<int, string>  $allowedLayers
++     */
++    public function load(string $manifestPath, array $allowedLayers): ModuleManifest
++    {
++        $contents = $this->files->get($manifestPath);
++        $data = json_decode($contents, true);
++
++        if (! is_array($data)) {
++            throw InvalidModuleManifestException::invalidJson($manifestPath);
++        }
++
++        return ModuleManifest::fromArray($data, dirname($manifestPath), $allowedLayers);
++    }
++}
+diff -ruN /workspace/deliverables/PrismaCommerce-M1A-02/app/Prisma/Modules/ModuleRegistry.php /workspace/work/PrismaCommerce-M1A-03/app/Prisma/Modules/ModuleRegistry.php
+--- /workspace/deliverables/PrismaCommerce-M1A-02/app/Prisma/Modules/ModuleRegistry.php	1969-12-31 21:00:00.000000000 -0300
++++ /workspace/work/PrismaCommerce-M1A-03/app/Prisma/Modules/ModuleRegistry.php	2026-06-12 00:52:55.316913882 -0300
+@@ -0,0 +1,71 @@
++<?php
++
++namespace App\Prisma\Modules;
++
++use App\Prisma\Modules\Contracts\ModuleRegistryContract;
++use App\Prisma\Modules\Data\ModuleManifest;
++use Illuminate\Contracts\Cache\Repository as CacheRepository;
++use Illuminate\Filesystem\Filesystem;
++use Illuminate\Support\Collection;
++
++class ModuleRegistry implements ModuleRegistryContract
++{
++    public function __construct(
++        private readonly Filesystem $files,
++        private readonly CacheRepository $cache,
++        private readonly ModuleManifestLoader $loader,
++    ) {
++    }
++
++    /**
++     * @return Collection<int, ModuleManifest>
++     */
++    public function all(): Collection
++    {
++        $cacheKey = config('prisma-modules.cache.key');
++        $ttl = (int) config('prisma-modules.cache.ttl', 300);
++
++        if (! (bool) config('prisma-modules.cache.enabled', true)) {
++            return $this->discover();
++        }
++
++        return $this->cache->remember($cacheKey, $ttl, fn (): Collection => $this->discover());
++    }
++
++    public function find(string $slug): ?ModuleManifest
++    {
++        return $this->all()->first(fn (ModuleManifest $manifest): bool => $manifest->slug === $slug);
++    }
++
++    public function has(string $slug): bool
++    {
++        return $this->find($slug) !== null;
++    }
++
++    public function refresh(): void
++    {
++        $this->cache->forget(config('prisma-modules.cache.key'));
++    }
++
++    /**
++     * @return Collection<int, ModuleManifest>
++     */
++    private function discover(): Collection
++    {
++        $basePath = config('prisma-modules.base_path', base_path('modules'));
++        $manifestFilename = config('prisma-modules.manifest_filename', 'module.json');
++        $allowedLayers = config('prisma-modules.layers', []);
++
++        if (! $this->files->isDirectory($basePath)) {
++            return collect();
++        }
++
++        return collect($this->files->directories($basePath))
++            ->map(fn (string $modulePath): string => $modulePath.DIRECTORY_SEPARATOR.$manifestFilename)
++            ->filter(fn (string $manifestPath): bool => $this->files->exists($manifestPath))
++            ->map(fn (string $manifestPath): ModuleManifest => $this->loader->load($manifestPath, $allowedLayers))
++            ->filter(fn (ModuleManifest $manifest): bool => $manifest->enabled)
++            ->sortBy('slug')
++            ->values();
++    }
++}
+diff -ruN /workspace/deliverables/PrismaCommerce-M1A-02/app/Prisma/Modules/Providers/ModuleRegistryServiceProvider.php /workspace/work/PrismaCommerce-M1A-03/app/Prisma/Modules/Providers/ModuleRegistryServiceProvider.php
+--- /workspace/deliverables/PrismaCommerce-M1A-02/app/Prisma/Modules/Providers/ModuleRegistryServiceProvider.php	1969-12-31 21:00:00.000000000 -0300
++++ /workspace/work/PrismaCommerce-M1A-03/app/Prisma/Modules/Providers/ModuleRegistryServiceProvider.php	2026-06-12 00:52:55.316913882 -0300
+@@ -0,0 +1,20 @@
++<?php
++
++namespace App\Prisma\Modules\Providers;
++
++use App\Prisma\Modules\Contracts\ModuleRegistryContract;
++use App\Prisma\Modules\ModuleManifestLoader;
++use App\Prisma\Modules\ModuleRegistry;
++use Illuminate\Support\ServiceProvider;
++
++class ModuleRegistryServiceProvider extends ServiceProvider
++{
++    public function register(): void
++    {
++        $this->mergeConfigFrom(base_path('config/prisma-modules.php'), 'prisma-modules');
++
++        $this->app->singleton(ModuleManifestLoader::class);
++        $this->app->singleton(ModuleRegistryContract::class, ModuleRegistry::class);
++        $this->app->alias(ModuleRegistryContract::class, 'prisma.modules');
++    }
++}
+diff -ruN /workspace/deliverables/PrismaCommerce-M1A-02/bootstrap/app.php /workspace/work/PrismaCommerce-M1A-03/bootstrap/app.php
+--- /workspace/deliverables/PrismaCommerce-M1A-02/bootstrap/app.php	2026-06-11 10:28:40.000000000 -0300
++++ /workspace/work/PrismaCommerce-M1A-03/bootstrap/app.php	2026-06-12 00:52:55.316913882 -0300
+@@ -20,5 +20,6 @@
+     ->withProviders([
+         App\Providers\AppServiceProvider::class,
+         App\Providers\Filament\AdminPanelProvider::class,
++        App\Prisma\Modules\Providers\ModuleRegistryServiceProvider::class,
+     ])
+     ->create();
+diff -ruN /workspace/deliverables/PrismaCommerce-M1A-02/config/prisma-modules.php /workspace/work/PrismaCommerce-M1A-03/config/prisma-modules.php
+--- /workspace/deliverables/PrismaCommerce-M1A-02/config/prisma-modules.php	1969-12-31 21:00:00.000000000 -0300
++++ /workspace/work/PrismaCommerce-M1A-03/config/prisma-modules.php	2026-06-12 00:53:55.485779248 -0300
+@@ -0,0 +1,54 @@
++<?php
++
++$modulesPath = env('PRISMA_MODULES_PATH');
++
++return [
++    /*
++    |--------------------------------------------------------------------------
++    | Official Module Registry
++    |--------------------------------------------------------------------------
++    |
++    | M1A-03 establishes filesystem manifest discovery only. Later milestones
++    | may add admin activation, lifecycle commands, permissions, and health
++    | checks without changing this public contract.
++    |
++    */
++
++    'base_path' => $modulesPath
++        ? (str_starts_with($modulesPath, DIRECTORY_SEPARATOR) ? $modulesPath : base_path($modulesPath))
++        : base_path('modules'),
++
++    'manifest_filename' => 'module.json',
++
++    'layers' => [
++        'core',
++        'commerce',
++        'cms',
++        'integration',
++        'extension',
++    ],
++
++    'cache' => [
++        'enabled' => env('PRISMA_MODULE_CACHE_ENABLED', true),
++        'key' => env('PRISMA_MODULE_CACHE_KEY', 'prisma.modules.registry'),
++        'ttl' => (int) env('PRISMA_MODULE_CACHE_TTL', 300),
++    ],
++
++    'module_structure' => [
++        'Config',
++        'Database/Migrations',
++        'Database/Seeders',
++        'Http/Controllers',
++        'Http/Requests',
++        'Http/Resources',
++        'Models',
++        'Services',
++        'Repositories',
++        'Filament/Resources',
++        'Filament/Widgets',
++        'Routes',
++        'Providers',
++        'Tests',
++        'docs',
++    ],
++];
+diff -ruN /workspace/deliverables/PrismaCommerce-M1A-02/docs/TEST_RESULTS_M1A_03.md /workspace/work/PrismaCommerce-M1A-03/docs/TEST_RESULTS_M1A_03.md
+--- /workspace/deliverables/PrismaCommerce-M1A-02/docs/TEST_RESULTS_M1A_03.md	1969-12-31 21:00:00.000000000 -0300
++++ /workspace/work/PrismaCommerce-M1A-03/docs/TEST_RESULTS_M1A_03.md	2026-06-12 00:54:17.158106098 -0300
+@@ -0,0 +1,49 @@
++# M1A-03 Test Results
++
++## Environment Available During Packaging
++
++The packaging workspace still does not include PHP or Composer, and external package installation is blocked. Runtime Laravel commands must be run on the validated SiteGround repository or another PHP 8.3+ environment.
++
++Available local checks:
++
++```text
++node -v: v24.14.0
++npm -v: 11.9.0
++php: not available in packaging workspace
++composer: not available in packaging workspace
++```
++
++## Static Verification Completed
++
++| Check | Result |
++| --- | --- |
++| JSON validation for `composer.json`, `package.json`, and fixture manifests | Passed |
++| JavaScript syntax check for `resources/js/app.js` | Passed |
++| M1A-03 file scope inspection | Passed |
++| No database migrations added for M1A-03 | Passed |
++| No commerce module or commerce feature implementation detected | Passed |
++| ZIP integrity check | Passed |
++
++## Runtime Verification To Run On SiteGround
++
++```bash
++composer dump-autoload
++php artisan config:clear
++php artisan test --filter=ModuleManifestTest
++php artisan test --filter=ModuleRegistryTest
++php artisan test
++```
++
++Expected coverage:
++
++- Valid module manifest hydration.
++- Invalid slug rejection.
++- Unknown architecture layer rejection.
++- Enabled module discovery.
++- Disabled module filtering.
++- Missing module directory handling.
++- Invalid manifest loader failure.
++
++## Notes
++
++M1A-03 introduces no database migrations, no public API endpoints, no Filament resources, and no commerce features.
+diff -ruN /workspace/deliverables/PrismaCommerce-M1A-02/docs/milestones/M1A-03-module-registry-foundation.md /workspace/work/PrismaCommerce-M1A-03/docs/milestones/M1A-03-module-registry-foundation.md
+--- /workspace/deliverables/PrismaCommerce-M1A-02/docs/milestones/M1A-03-module-registry-foundation.md	1969-12-31 21:00:00.000000000 -0300
++++ /workspace/work/PrismaCommerce-M1A-03/docs/milestones/M1A-03-module-registry-foundation.md	2026-06-12 00:53:40.713563171 -0300
+@@ -0,0 +1,86 @@
++# M1A-03: Core Modular Directory and Prisma Module Registry Foundation
++
++## Goal
++
++Create the approved Prisma Commerce module architecture foundation without implementing commerce features or starting M1A-04.
++
++## Scope
++
++- Prisma-owned module manifest contract.
++- Filesystem discovery from `modules/`.
++- Typed module manifest value object.
++- Module registry service and contract.
++- Configurable cache settings.
++- Laravel service provider binding.
++- Module directory documentation.
++- Unit tests using isolated fixture modules.
++
++## Out of Scope
++
++- M1A-04.
++- Commerce features.
++- Official module skeleton implementations.
++- Module lifecycle commands.
++- Admin module management UI.
++- Database-backed module state.
++- Permission seeding.
++- Route auto-loading.
++- Migration auto-loading.
++- Plugin or theme lifecycle behavior.
++
++## Architecture
++
++The registry sits in the Core Layer and prepares later module work while keeping module ownership boundaries explicit.
++
++Service boundaries:
++
++- `ModuleManifest` owns manifest typing and validation.
++- `ModuleManifestLoader` owns JSON loading.
++- `ModuleRegistry` owns discovery and lookup.
++- `ModuleRegistryServiceProvider` owns Laravel container binding.
++- `config/prisma-modules.php` owns registry settings and approved layer names.
++
++Extension points:
++
++- Future modules add `module.json`.
++- Future admin UI can read `ModuleRegistryContract`.
++- Future route/migration loading can use manifest paths.
++- Future permission seeding can use manifest permissions.
++
++## Database Schema
++
++No migrations or database changes are included.
++
++## APIs
++
++No API endpoints are included.
++
++## Permissions
++
++No permissions are registered or seeded.
++
++## Admin UI
++
++No Filament resources, pages, widgets, or navigation are included.
++
++## Tests
++
++Tests cover manifest validation and registry discovery with fixture modules only.
++
++## Implementation Steps
++
++1. Add the Prisma module namespace under `app/Prisma/Modules`.
++2. Add module registry config.
++3. Register the module registry provider in the Laravel bootstrap provider list.
++4. Add `modules/README.md` documenting the required future module shape.
++5. Add fixture manifests and unit tests.
++6. Run static checks and PHP test commands on the target environment.
++
++## Acceptance Criteria
++
++- The registry is bound through `ModuleRegistryContract`.
++- Enabled module manifests can be discovered.
++- Disabled manifests are ignored.
++- Invalid manifests fail validation.
++- No official module skeletons or commerce features are implemented.
++- M1A-04 is untouched.
+diff -ruN /workspace/deliverables/PrismaCommerce-M1A-02/docs/modules/MODULE_REGISTRY.md /workspace/work/PrismaCommerce-M1A-03/docs/modules/MODULE_REGISTRY.md
+--- /workspace/deliverables/PrismaCommerce-M1A-02/docs/modules/MODULE_REGISTRY.md	1969-12-31 21:00:00.000000000 -0300
++++ /workspace/work/PrismaCommerce-M1A-03/docs/modules/MODULE_REGISTRY.md	2026-06-12 00:53:40.713563171 -0300
+@@ -0,0 +1,71 @@
++# Prisma Module Registry Foundation
++
++## Architecture
++
++M1A-03 introduces the Prisma-owned module registry contract. It uses filesystem discovery of `module.json` manifests inside `modules/` and exposes typed manifest data through `ModuleRegistryContract`.
++
++The registry is intentionally independent from `nwidart/laravel-modules`. That package may be used later as an internal helper, but Prisma Commerce owns the public module contract.
++
++Core files:
++
++- `config/prisma-modules.php`
++- `app/Prisma/Modules/Contracts/ModuleRegistryContract.php`
++- `app/Prisma/Modules/Data/ModuleManifest.php`
++- `app/Prisma/Modules/ModuleManifestLoader.php`
++- `app/Prisma/Modules/ModuleRegistry.php`
++- `app/Prisma/Modules/Providers/ModuleRegistryServiceProvider.php`
++
++## Database Schema
++
++No database changes are introduced in M1A-03.
++
++The registry is filesystem-first. Admin activation state, install logs, lifecycle events, and database-backed module state are later milestones.
++
++## APIs
++
++No public API endpoints are introduced in M1A-03.
++
++Future API exposure must remain versioned under `/api/v1` and protected according to admin or integration API rules.
++
++## Permissions
++
++No permissions are created by M1A-03.
++
++The manifest supports a `permissions` array so future permission seeding can be module-owned, but this milestone does not seed or hardcode permissions.
++
++## Admin UI
++
++No Filament resources are introduced in M1A-03.
++
++Future admin module listing, enable/disable controls, and health checks belong to later M1A work.
++
++## Tests
++
++M1A-03 adds unit tests for:
++
++- Valid manifest hydration.
++- Invalid slug rejection.
++- Unknown layer rejection.
++- Enabled module discovery.
++- Disabled module filtering.
++- Missing module directory handling.
++- Invalid manifest loader failures.
++
++## Implementation Steps
++
++1. Add `config/prisma-modules.php`.
++2. Register `ModuleRegistryServiceProvider`.
++3. Bind `ModuleRegistryContract` to `ModuleRegistry`.
++4. Discover enabled module manifests from the configured `modules/` path.
++5. Cache discovery results with a short configurable TTL.
++6. Add test fixture manifests under `tests/Fixtures/modules`.
++7. Add unit tests for manifest validation and registry discovery.
++
++## Acceptance Criteria
++
++- Registry can discover enabled module manifests.
++- Registry ignores disabled module manifests.
++- Registry validates required manifest fields, slugs, and layers.
++- Registry can return a manifest by slug.
++- No commerce, CMS, plugin, theme, or admin UI features are implemented.
++- No database tables or migrations are introduced.
+diff -ruN /workspace/deliverables/PrismaCommerce-M1A-02/modules/README.md /workspace/work/PrismaCommerce-M1A-03/modules/README.md
+--- /workspace/deliverables/PrismaCommerce-M1A-02/modules/README.md	1969-12-31 21:00:00.000000000 -0300
++++ /workspace/work/PrismaCommerce-M1A-03/modules/README.md	2026-06-12 00:53:40.713563171 -0300
+@@ -0,0 +1,66 @@
++# Prisma Commerce Modules
++
++This directory is reserved for official Prisma Commerce modules.
++
++M1A-03 establishes the module registry foundation only. It does not create official module skeletons or commerce features.
++
++## Required Manifest
++
++Each future module must provide a `module.json` file at its module root.
++
++```json
++{
++  "name": "Core",
++  "slug": "core",
++  "version": "1.0.0",
++  "layer": "core",
++  "enabled": true,
++  "description": "Core platform services.",
++  "providers": [
++    "Modules\\Core\\Providers\\CoreServiceProvider"
++  ],
++  "dependencies": [],
++  "permissions": [],
++  "routes": {
++    "web": "Routes/web.php",
++    "admin": "Routes/admin.php",
++    "api": "Routes/api.php"
++  },
++  "migrations_path": "Database/Migrations"
++}
++```
++
++## Approved Module Layers
++
++- `core`
++- `commerce`
++- `cms`
++- `integration`
++- `extension`
++
++## Approved Future Module Shape
++
++```text
++modules/Example/
++├── Config/
++├── Database/
++│   ├── Migrations/
++│   └── Seeders/
++├── Http/
++│   ├── Controllers/
++│   ├── Requests/
++│   └── Resources/
++├── Models/
++├── Services/
++├── Repositories/
++├── Filament/
++│   ├── Resources/
++│   └── Widgets/
++├── Routes/
++│   ├── web.php
++│   ├── admin.php
++│   └── api.php
++├── Providers/
++├── Tests/
++└── docs/
++```
+diff -ruN /workspace/deliverables/PrismaCommerce-M1A-02/tests/Fixtures/modules/DisabledModule/module.json /workspace/work/PrismaCommerce-M1A-03/tests/Fixtures/modules/DisabledModule/module.json
+--- /workspace/deliverables/PrismaCommerce-M1A-02/tests/Fixtures/modules/DisabledModule/module.json	1969-12-31 21:00:00.000000000 -0300
++++ /workspace/work/PrismaCommerce-M1A-03/tests/Fixtures/modules/DisabledModule/module.json	2026-06-12 00:53:40.709563111 -0300
+@@ -0,0 +1,7 @@
++{
++  "name": "Disabled Fixture",
++  "slug": "disabled-fixture",
++  "version": "1.0.0",
++  "layer": "core",
++  "enabled": false
++}
+diff -ruN /workspace/deliverables/PrismaCommerce-M1A-02/tests/Fixtures/modules/InvalidModule/module.json /workspace/work/PrismaCommerce-M1A-03/tests/Fixtures/modules/InvalidModule/module.json
+--- /workspace/deliverables/PrismaCommerce-M1A-02/tests/Fixtures/modules/InvalidModule/module.json	1969-12-31 21:00:00.000000000 -0300
++++ /workspace/work/PrismaCommerce-M1A-03/tests/Fixtures/modules/InvalidModule/module.json	2026-06-12 00:53:40.709563111 -0300
+@@ -0,0 +1,7 @@
++{
++  "name": "Invalid Fixture",
++  "slug": "Invalid Fixture",
++  "version": "1.0.0",
++  "layer": "core",
++  "enabled": true
++}
+diff -ruN /workspace/deliverables/PrismaCommerce-M1A-02/tests/Fixtures/modules/ValidCoreModule/module.json /workspace/work/PrismaCommerce-M1A-03/tests/Fixtures/modules/ValidCoreModule/module.json
+--- /workspace/deliverables/PrismaCommerce-M1A-02/tests/Fixtures/modules/ValidCoreModule/module.json	1969-12-31 21:00:00.000000000 -0300
++++ /workspace/work/PrismaCommerce-M1A-03/tests/Fixtures/modules/ValidCoreModule/module.json	2026-06-12 00:53:40.709563111 -0300
+@@ -0,0 +1,21 @@
++{
++  "name": "Valid Core Fixture",
++  "slug": "valid-core-fixture",
++  "version": "1.0.0",
++  "layer": "core",
++  "enabled": true,
++  "description": "A test-only module manifest used to validate registry discovery.",
++  "providers": [
++    "Tests\\Fixtures\\Modules\\ValidCoreModule\\Providers\\ValidCoreModuleServiceProvider"
++  ],
++  "dependencies": [],
++  "permissions": [
++    "valid-core-fixture.view"
++  ],
++  "routes": {
++    "api": "Routes/api.php",
++    "admin": "Routes/admin.php",
++    "web": "Routes/web.php"
++  },
++  "migrations_path": "Database/Migrations"
++}
+diff -ruN /workspace/deliverables/PrismaCommerce-M1A-02/tests/Pest.php /workspace/work/PrismaCommerce-M1A-03/tests/Pest.php
+--- /workspace/deliverables/PrismaCommerce-M1A-02/tests/Pest.php	2026-06-11 10:30:04.000000000 -0300
++++ /workspace/work/PrismaCommerce-M1A-03/tests/Pest.php	2026-06-12 00:54:02.425881076 -0300
+@@ -2,6 +2,6 @@
+ 
+ use Illuminate\Foundation\Testing\RefreshDatabase;
+ 
+-pest()->extend(Tests\TestCase::class)
+-    ->use(RefreshDatabase::class)
+-    ->in('Feature');
++pest()->extend(Tests\TestCase::class)->in('Feature', 'Unit');
++
++pest()->use(RefreshDatabase::class)->in('Feature');
+diff -ruN /workspace/deliverables/PrismaCommerce-M1A-02/tests/Unit/Modules/ModuleManifestTest.php /workspace/work/PrismaCommerce-M1A-03/tests/Unit/Modules/ModuleManifestTest.php
+--- /workspace/deliverables/PrismaCommerce-M1A-02/tests/Unit/Modules/ModuleManifestTest.php	1969-12-31 21:00:00.000000000 -0300
++++ /workspace/work/PrismaCommerce-M1A-03/tests/Unit/Modules/ModuleManifestTest.php	2026-06-12 00:53:40.709563111 -0300
+@@ -0,0 +1,42 @@
++<?php
++
++use App\Prisma\Modules\Data\ModuleManifest;
++use App\Prisma\Modules\Exceptions\InvalidModuleManifestException;
++
++it('creates a typed module manifest from valid manifest data', function (): void {
++    $manifest = ModuleManifest::fromArray([
++        'name' => 'Core',
++        'slug' => 'core',
++        'version' => '1.0.0',
++        'layer' => 'core',
++        'enabled' => true,
++        'providers' => ['Modules\\Core\\Providers\\CoreServiceProvider'],
++        'permissions' => ['core.view'],
++        'routes' => ['api' => 'Routes/api.php'],
++        'migrations_path' => 'Database/Migrations',
++    ], base_path('modules/Core'), ['core', 'commerce']);
++
++    expect($manifest->name)->toBe('Core')
++        ->and($manifest->slug)->toBe('core')
++        ->and($manifest->enabled)->toBeTrue()
++        ->and($manifest->providers)->toBe(['Modules\\Core\\Providers\\CoreServiceProvider'])
++        ->and($manifest->routes)->toBe(['api' => 'Routes/api.php']);
++});
++
++it('rejects invalid module slugs', function (): void {
++    ModuleManifest::fromArray([
++        'name' => 'Bad Module',
++        'slug' => 'Bad Module',
++        'version' => '1.0.0',
++        'layer' => 'core',
++    ], base_path('modules/BadModule'), ['core']);
++})->throws(InvalidModuleManifestException::class);
++
++it('rejects unknown architecture layers', function (): void {
++    ModuleManifest::fromArray([
++        'name' => 'Unknown Layer',
++        'slug' => 'unknown-layer',
++        'version' => '1.0.0',
++        'layer' => 'sales',
++    ], base_path('modules/UnknownLayer'), ['core']);
++})->throws(InvalidModuleManifestException::class);
+diff -ruN /workspace/deliverables/PrismaCommerce-M1A-02/tests/Unit/Modules/ModuleRegistryTest.php /workspace/work/PrismaCommerce-M1A-03/tests/Unit/Modules/ModuleRegistryTest.php
+--- /workspace/deliverables/PrismaCommerce-M1A-02/tests/Unit/Modules/ModuleRegistryTest.php	1969-12-31 21:00:00.000000000 -0300
++++ /workspace/work/PrismaCommerce-M1A-03/tests/Unit/Modules/ModuleRegistryTest.php	2026-06-12 00:53:40.713563171 -0300
+@@ -0,0 +1,45 @@
++<?php
++
++use App\Prisma\Modules\Contracts\ModuleRegistryContract;
++use App\Prisma\Modules\Exceptions\InvalidModuleManifestException;
++use App\Prisma\Modules\ModuleManifestLoader;
++
++beforeEach(function (): void {
++    config()->set('prisma-modules.base_path', base_path('tests/Fixtures/modules'));
++    config()->set('prisma-modules.cache.enabled', false);
++});
++
++it('discovers enabled module manifests from configured module path', function (): void {
++    $registry = app(ModuleRegistryContract::class);
++
++    $modules = $registry->all();
++
++    expect($modules)->toHaveCount(1)
++        ->and($modules->first()->slug)->toBe('valid-core-fixture')
++        ->and($registry->has('valid-core-fixture'))->toBeTrue()
++        ->and($registry->has('disabled-fixture'))->toBeFalse();
++});
++
++it('finds a module manifest by slug', function (): void {
++    $manifest = app(ModuleRegistryContract::class)->find('valid-core-fixture');
++
++    expect($manifest)->not->toBeNull()
++        ->and($manifest->name)->toBe('Valid Core Fixture')
++        ->and($manifest->layer)->toBe('core')
++        ->and($manifest->migrationsPath)->toBe('Database/Migrations');
++});
++
++it('returns an empty collection when the modules directory does not exist', function (): void {
++    config()->set('prisma-modules.base_path', base_path('tests/Fixtures/missing-modules'));
++
++    expect(app(ModuleRegistryContract::class)->all())->toHaveCount(0);
++});
++
++it('rejects invalid fixture manifests through the loader', function (): void {
++    $loader = app(ModuleManifestLoader::class);
++
++    $loader->load(
++        base_path('tests/Fixtures/modules/InvalidModule/module.json'),
++        config('prisma-modules.layers'),
++    );
++})->throws(InvalidModuleManifestException::class);
