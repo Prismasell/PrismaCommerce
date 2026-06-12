@@ -1,0 +1,15 @@
+{
+  "name": "Core",
+  "slug": "core",
+  "version": "0.1.0",
+  "layer": "core",
+  "enabled": true,
+  "description": "Foundational Prisma Commerce module contracts and registries.",
+  "providers": [
+    "Modules\\Core\\Providers\\CoreServiceProvider"
+  ],
+  "dependencies": [],
+  "permissions": [],
+  "routes": {},
+  "migrations_path": null
+}
